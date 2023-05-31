@@ -8,6 +8,16 @@ __version__ = "3.0"
 
 import argparse
 
+class Family:
+	"""Represents the whole family.
+	"""
+	
+	def __init__(self, input_file: str):
+		# parsing input_file
+		with open(input_file, "r") as f:
+			for line_number, line in enumerate(f):
+				print(line_number, line, end='')
+
 
 def main():
 	# Parse command line options
@@ -16,7 +26,10 @@ def main():
 	parser.add_argument('input_file', metavar='INPUT_FILE',
 		help='the formatted text file representing the family')
 	args = parser.parse_args()
-	print(args)
+	#print(args)
+
+	# Create the family
+	family = Family(args.input_file)
 
 if __name__ == '__main__':
 	main()
