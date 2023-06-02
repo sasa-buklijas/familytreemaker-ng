@@ -7,6 +7,8 @@ __license__ = "GPL"
 __version__ = "3.0"
 
 import argparse
+from pathlib import Path
+
 
 class FTError(Exception):
     """A base class for FTError exceptions."""
@@ -20,10 +22,17 @@ class Family:
 	"""
 
 	def __init__(self, input_file: str):
-		# parsing input_file
-		# with more rigid format of input family file it is easier to parse it
+		self.__parse_input_file(input_file)
+		
+	def __parse_input_file(self, input_file: str):
+		"""parsing input_file
+			with more rigid format of input family file it is easier to parse it
+		"""
+		#def __parse_person():
+
+
 		with open(input_file, "r") as f:
-			for line_number, line in enumerate(f):
+			for line_number, line in enumerate(f, start=1):
 				print(line_number, line, end='')
 
 				line = line.rstrip()
@@ -38,17 +47,42 @@ class Family:
 
 				if line[0] == '\t':
 					print('    # THIS IS CHILD')
+					# parse child
+					# child must start with name can not be mentioned first time
 				elif len(line) >= 6:# (id=x)
 					print('    # THIS IS PERSON IN UNION')
+
+					if line[0] == '(':
+						ParsingError(f'TODO {line_number}::{line}') 
+						# this is just id, person was defined before
+						# we just need to find id and make connection
+
+					if line[0] in (' ', '\t'):
+						raise ParsingError(f'Incorrect format for person in line number {line_number}::{line}')
+		
+					name, rest = line.split('(')
+					print(f'{rest=}')
+
+					#Person((line_number, line))
+					name, rest = line.split('(')
 				else:
 					raise ParsingError(f'Do not know how to parse line number {line_number}::{line}')
+		
+		return True
+
 
 class Person:
 	"""Represents the person.
 	"""
+	# just to store data ???
 
-	def __init__(self, line_to_parse: str):
-		pass
+	def __init__(self, to_parse: str):
+		line = to_parse[1]	# 1 is line
+
+		
+
+		name, rest = line.split('(')
+		
 
 
 def main():

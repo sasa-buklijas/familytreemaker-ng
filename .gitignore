@@ -11,3 +11,6 @@ tests/*.png
 
 # Python virtualenv
 venv*
+
+# Python bytecode
+*.pyc
