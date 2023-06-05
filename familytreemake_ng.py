@@ -8,7 +8,7 @@ __version__ = "3.0"
 
 import argparse
 from pathlib import Path
-
+import re
 
 class FTError(Exception):
     """A base class for FTError exceptions."""
@@ -52,21 +52,63 @@ class Family:
 				elif len(line) >= 6:# (id=x)
 					print('    # THIS IS PERSON IN UNION')
 
+					# pocni prvo samo s imenom i id
+					regex = r'''
+						# start with main_name, what is first and second name together
+							# [\w ]+?, ? is there so that + is non-greedy
+							# (?:[ ]*)? is there so that there can be multiple spaces after name, 
+								# but we do not capture it
+						^(?P<main_name>[\w ]+?)(?:[ ]*)? 
+
+						# ( mandatory, start for attributes
+						\(							
+
+						# gender is mandatory M or F ends with ','
+						(?P<gender>[M|F]),[ ]*		# male or female, end with ',', zero or more spaces allowed
+		
+						# id is mandatory ',' allowed zero on one time, paces allowed after ','
+							# no spaces ' ' allowed in id
+						id=(?P<id>[\w]+),[ ]*   	
+						
+						# birth_day is mandatory, because you will not add somebody who is not born
+							# [\w ]+?, ? is there so that + is non-greedy
+						#birth_day=(?P<birth_day>[\w ]+?)(?:,?[ ]*)? # more advanced version, add if needed
+						birth_day=(?P<birth_day>[\w]+),[ ]*  
+
+						# death_day is optional
+							# [\w ]+?, ? is there so that + is non-greedy
+						(?:death_day=(?P<death_day>[\w]+),[ ]*)?
+						#(?:death_day=(?P<death_day>[\w ]+,))[ ]* 
+
+						# maiden_name is optional, this is surname before marriage
+						(?:maiden_name=(?P<maiden_name>[\w]+),[ ]*)?
+
+						\)$	# end with ')', can be spaces after it in original line because of rstrip()
+					'''
+
+					match = re.search(regex, line, re.VERBOSE)
+					if 	match is None:
+						raise ParsingError(
+							f'match is None for person format on line number {line_number}::"{line}"')
+
+					elif ('main_name', 'gender', 'id', 'birth_day') in match.groupdict():
+						raise ParsingError(
+							f'Incorrect person format on line number {line_number}::"{line}"\n{match.groupdict()}')
+					
+					else:
+						print(f'	GROUP: {match.groupdict()}')
+
 					if line[0] == '(':
 						ParsingError(f'TODO {line_number}::{line}') 
 						# this is just id, person was defined before
 						# we just need to find id and make connection
 
 					if line[0] in (' ', '\t'):
-						raise ParsingError(f'Incorrect format for person in line number {line_number}::{line}')
+						raise ParsingError(
+							f'Incorrect format for person in line number {line_number}::"{line}"')
 		
-					name, rest = line.split('(')
-					print(f'{rest=}')
-
-					#Person((line_number, line))
-					name, rest = line.split('(')
 				else:
-					raise ParsingError(f'Do not know how to parse line number {line_number}::{line}')
+					raise ParsingError(f'Do not know how to parse line number {line_number}::"{line}"')
 		
 		return True
 
@@ -77,12 +119,7 @@ class Person:
 	# just to store data ???
 
 	def __init__(self, to_parse: str):
-		line = to_parse[1]	# 1 is line
-
-		
-
-		name, rest = line.split('(')
-		
+		pass
 
 
 def main():
