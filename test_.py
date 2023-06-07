@@ -1,6 +1,6 @@
 import pytest
 import familytreemake_ng as t
-from familytreemake_ng import ParsingError
+from familytreemake_ng import ParsingError, DuplicatedPersonIDError
 
 
 # correct
@@ -48,4 +48,15 @@ def test_is_person_line_valid(tmp_files):
 )
 def test_is_person_line_invalid(tmp_files):
     with pytest.raises(ParsingError):
+        t.Family(tmp_files / 'f')
+
+# duplicated id error
+@pytest.mark.parametrize('tmp_files', [
+        {'f': 'a(M, id=1, birth_day=1,)\nb(F, id=1, birth_day=1,)'},
+    ],
+    indirect=['tmp_files'],
+)
+# add expected error messages
+def test_is_id_duplicated(tmp_files):
+    with pytest.raises(DuplicatedPersonIDError):    #DuplicatedPersonIDError
         t.Family(tmp_files / 'f')

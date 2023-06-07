@@ -9,19 +9,44 @@ __version__ = "3.0"
 import argparse
 from pathlib import Path
 import re
+from dataclasses import dataclass
 
 class FTError(Exception):
     """A base class for FTError exceptions."""
     
+
 class ParsingError(FTError):
 	"""A custom exception class for parsing input file."""
 
+	error_message = 'Incorrect person format on line number {}::"{}"'
+
+	def __init__(self, *args):
+		super().__init__(*args)
+		self.args = args
+
+	def __str__(self):
+		return self.error_message.format(*self.args)
+
+
+class DuplicatedPersonIDError(ParsingError):
+	"""A custom exception class for duplicated person id inside input file."""
+
+	error_message = 'Person from line={0}, have same id(already defined) '\
+					'as person from line={1.first_seen_in_line}--->{1}'
+
+	def __init__(self, *args):
+		super().__init__(*args)
+		self.args = args
+
+	def __str__(self):
+		return self.error_message.format(self.args[0], self.args[1])
 
 class Family:
 	"""Represents the whole family.
 	"""
 
 	def __init__(self, input_file: str):
+		self.__persons = dict()	# every person in family
 		self.__parse_input_file(input_file)
 		
 	def __parse_input_file(self, input_file: str):
@@ -88,38 +113,65 @@ class Family:
 
 					match = re.search(regex, line, re.VERBOSE)
 					if 	match is None:
-						raise ParsingError(
-							f'match is None for person format on line number {line_number}::"{line}"')
+						raise ParsingError(line_number, line, match)
 
+					# think that this is not need anymore
 					elif ('main_name', 'gender', 'id', 'birth_day') in match.groupdict():
 						raise ParsingError(
 							f'Incorrect person format on line number {line_number}::"{line}"\n{match.groupdict()}')
 					
 					else:
+						exist: Person = self.__is_person_already_in_family(match.group('id'))
+						if exist:
+							raise DuplicatedPersonIDError(line_number, exist)
+
+						else:
+							new_person = Person(match.group('main_name'),
+											match.group('gender'),
+											match.group('id'),
+											match.group('birth_day'),
+											line_number)
+							self.__persons[match.group('id')] = new_person
+						# how to do if there are optional
+
 						print(f'	GROUP: {match.groupdict()}')
 
 					if line[0] == '(':
-						ParsingError(f'TODO {line_number}::{line}') 
+						raise ParsingError(line_number, line)
 						# this is just id, person was defined before
 						# we just need to find id and make connection
 
 					if line[0] in (' ', '\t'):
-						raise ParsingError(
-							f'Incorrect format for person in line number {line_number}::"{line}"')
+						raise ParsingError(line_number, line)
 		
 				else:
-					raise ParsingError(f'Do not know how to parse line number {line_number}::"{line}"')
+					raise ParsingError(line_number, line)
 		
 		return True
+	
+	def __is_person_already_in_family(self, id: str):
+		'''Return TRUE if id/person is already in family'''
+		if id in self.__persons:
+			return self.__persons[id]
+		return False
+
+		# retunr self.__persons.get(self.__persons[id], False)
 
 
+@dataclass(frozen=True)	# frozen=True means it can not be changed once it is created
 class Person:
 	"""Represents the person.
 	"""
-	# just to store data ???
+	main_name : str
+	gender : str
+	id : str
+	birth_day : str 
+	first_seen_in_line: int	  # for debug is ti is seen
+	death_day : str = None
+	maiden_name : str = None
+	
 
-	def __init__(self, to_parse: str):
-		pass
+
 
 
 def main():
