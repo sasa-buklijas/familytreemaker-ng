@@ -58,5 +58,10 @@ def test_is_person_line_invalid(tmp_files):
 )
 # add expected error messages
 def test_is_id_duplicated(tmp_files):
-    with pytest.raises(DuplicatedPersonIDError):    #DuplicatedPersonIDError
+    with pytest.raises(DuplicatedPersonIDError) as e:    #DuplicatedPersonIDError
         t.Family(tmp_files / 'f')
+        
+    print('----MY', str(e.value))
+    part_of_expected_error_text = \
+    'Person from line=2, have same id(already defined) as person from line=1--->Person'
+    assert str(e.value).startswith(part_of_expected_error_text)

@@ -41,6 +41,7 @@ class DuplicatedPersonIDError(ParsingError):
 	def __str__(self):
 		return self.error_message.format(self.args[0], self.args[1])
 
+
 class Family:
 	"""Represents the whole family.
 	"""
